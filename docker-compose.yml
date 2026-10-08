@@ -1,0 +1,57 @@
+# dockname: every Docker container with a published port gets a <name>.localhost URL.
+# Start:  docker compose up -d        Dashboard: http://dockname.localhost
+name: dockname
+
+services:
+  traefik:
+    image: traefik:v3.6
+    container_name: dockname
+    restart: unless-stopped
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.file.directory=/routes
+      - --providers.file.watch=true
+      - --log.level=ERROR
+      - --global.checkNewVersion=false
+      - --global.sendAnonymousUsage=false
+    ports:
+      - "${DOCKNAME_HTTP_PORT:-80}:80"
+    volumes:
+      - routes:/routes:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      dockname.enable: "false"
+    logging: &logging
+      driver: json-file
+      options: { max-size: "1m", max-file: "2" }
+
+  generator:
+    image: docker:27-cli
+    container_name: dockname-generator
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/dockname/generator.sh"]
+    environment:
+      DOCKNAME_DOMAIN: ${DOCKNAME_DOMAIN:-localhost}
+      DOCKNAME_HTTP_PORT: ${DOCKNAME_HTTP_PORT:-80}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./:/dockname:ro
+      - routes:/routes
+    labels:
+      dockname.enable: "false"
+    logging: *logging
+
+  index:
+    image: busybox:1.37
+    container_name: dockname-index
+    restart: unless-stopped
+    command: ["httpd", "-f", "-p", "80", "-h", "/routes/www"]
+    volumes:
+      - routes:/routes:ro
+    labels:
+      dockname.enable: "false"
+    logging: *logging
+
+volumes:
+  routes:

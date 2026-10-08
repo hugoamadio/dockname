@@ -1,0 +1,7 @@
+web|web.localhost|8081|web
+shop-api-1|api.shop.localhost|3001|shop-api-1
+shop-api-2|api-2.shop.localhost|3002|shop-api-2
+admin|admin.localhost|7002|admin
+custom|docs.localhost,docs.example.localhost|7101|custom
+api-feat42|feat42.api.localhost|4000|api-feat42
+legacy-blog-1|blog.localhost|8500|legacy-blog-1

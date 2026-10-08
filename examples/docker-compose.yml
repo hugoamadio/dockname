@@ -1,0 +1,18 @@
+# Try dockname: `docker compose -f examples/docker-compose.yml up -d`, then open
+# http://dockname.localhost (all URLs), http://web.shop.localhost and http://docs.localhost
+name: shop
+
+services:
+  web:
+    image: nginx:alpine
+    ports: ["8091:80"]          # -> web.shop.localhost
+
+  api:
+    image: traefik/whoami
+    ports: ["8092:80"]          # -> api.shop.localhost
+
+  docs:
+    image: nginx:alpine
+    ports: ["8093:80"]
+    labels:
+      dockname.host: docs        # -> docs.localhost (instead of docs.shop.localhost)

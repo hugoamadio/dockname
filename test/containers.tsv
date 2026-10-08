@@ -1,0 +1,10 @@
+web	0.0.0.0:8081->80/tcp, [::]:8081->80/tcp					
+shop-api-1	0.0.0.0:3001->3000/tcp				shop	api
+shop-api-2	0.0.0.0:3002->3000/tcp				shop	api
+my_db	127.0.0.1:5432->5432/tcp					
+hidden	0.0.0.0:9999->80/tcp	false				
+admin	0.0.0.0:7001->22/tcp, 0.0.0.0:7002->8080/tcp					
+custom	0.0.0.0:7100->80/tcp, 0.0.0.0:7101->9090/tcp		docs, Docs.example.localhost	9090		
+api-feat42	0.0.0.0:4000->4000/tcp					
+worker	0.0.0.0:6000-6001->6000-6001/udp					
+legacy-blog-1	0.0.0.0:8500->80/tcp				legacy	blog

@@ -1,0 +1,50 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-and-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck -s sh generator.sh test/run.sh
+      - name: unit tests (dash)
+        run: sh test/run.sh
+      - name: unit tests (busybox, the runtime image)
+        run: docker run --rm -v "$PWD":/w:ro -w /w docker:27-cli sh test/run.sh
+
+  end-to-end:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: start dockname and the example stack
+        run: |
+          docker compose up -d
+          docker compose -f examples/docker-compose.yml up -d
+          docker run -d --name hello -p 8081:80 nginx:alpine
+      - name: every container answers on its name
+        run: |
+          check() {
+            for i in $(seq 1 20); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --resolve "$1:80:127.0.0.1" "http://$1/") || true
+              [ "$code" = "$2" ] && { echo "ok $1 -> $code"; return 0; }
+              sleep 1
+            done
+            echo "FAIL $1 -> $code (want $2)"; docker logs dockname-generator; return 1
+          }
+          check hello.localhost 200
+          check web.shop.localhost 200
+          check api.shop.localhost 200
+          check docs.localhost 200
+          check dockname.localhost 200
+          check nope.localhost 404
+          curl -s --resolve dockname.localhost:80:127.0.0.1 http://dockname.localhost/routes.json | python3 -m json.tool
+      - name: a stopped container loses its URL
+        run: |
+          docker rm -f hello
+          sleep 3
+          code=$(curl -s -o /dev/null -w '%{http_code}' --resolve hello.localhost:80:127.0.0.1 http://hello.localhost/)
+          test "$code" = 404
